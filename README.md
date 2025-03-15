@@ -1,39 +1,20 @@
-# .
+# PDF Meta Data Editor
 
-This template should help get you started developing with Vue 3 in Vite.
+Edit PDF metadata and delete pages easily. It's a free, ad-free, and privacy-focused tool.  
+No server involved, all data managed locally.
 
-## Recommended IDE Setup
+## Features
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Edit PDF metadata such as title, author, subject, and keywords.
+- Delete specific pages from your PDF files.
+- Completely client-side operation for enhanced privacy.
+- No ads, no tracking, no cookies.
 
-## Type Support for `.vue` Imports in TS
+## License
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Customize configuration
+### Third-party Libraries
 
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+This project uses [vue-pdf-embed](https://github.com/arkokoley/vue-pdf-embed),  
+which is licensed under the MIT License.
