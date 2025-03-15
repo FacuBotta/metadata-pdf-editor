@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DeleteIcon from '@/components/icons/DeleteIcon.vue'
+import PDFPagePlaceholder from '@/components/PDFPagePlaceholder.vue'
 import { PDFDocument } from 'pdf-lib'
 import { ref } from 'vue'
 import VuePdfEmbed from 'vue-pdf-embed'
@@ -10,6 +12,39 @@ const isFileUploaded = ref(false)
 const pdfFile = ref<File | null>(null)
 const pdfSource = ref<string | null>(null)
 const totalPages = ref(1)
+const pagesToDelete = ref<number[]>([])
+
+const pagesLoaded = ref<number[]>([])
+const handleDeletePage = (page: number) => {
+  if (pagesToDelete.value.includes(page)) {
+    pagesToDelete.value = pagesToDelete.value.filter((p) => p !== page)
+  } else {
+    if (pagesToDelete.value.length >= totalPages.value - 1) {
+      toast.warning('You are deleting all pages !')
+      return
+    }
+    pagesToDelete.value.push(page)
+  }
+}
+interface MetaData {
+  title: string | null
+  author: string | null
+  subject: string | null
+  keywords: string | null
+  creator: string | null
+  producer: string | null
+  creationDate: Date | string
+}
+
+const metaDataValues = ref<MetaData>({
+  title: '',
+  author: '',
+  subject: '',
+  keywords: '',
+  creator: '',
+  producer: '',
+  creationDate: '',
+})
 
 const handleFile = async (file: File) => {
   if (file && file.type === 'application/pdf') {
@@ -21,6 +56,17 @@ const handleFile = async (file: File) => {
     const arrayBuffer = await file.arrayBuffer()
     const pdfDoc = await PDFDocument.load(arrayBuffer)
     totalPages.value = pdfDoc.getPageCount()
+
+    metaDataValues.value = {
+      title: pdfDoc.getTitle() || '',
+      author: pdfDoc.getAuthor() || '',
+      subject: pdfDoc.getSubject() || '',
+      keywords: pdfDoc.getKeywords() || '',
+      creator: pdfDoc.getCreator() || '',
+      producer: pdfDoc.getProducer() || '',
+      creationDate: pdfDoc.getCreationDate() || new Date(),
+    }
+    console.log('Meta data:', metaDataValues.value)
 
     toast.success('File uploaded successfully!')
   } else {
@@ -43,13 +89,63 @@ const onFileSelected = (e: Event) => {
 const openFileDialog = () => {
   fileInput.value?.click()
 }
+
+const handleSubmit = async (e: Event) => {
+  e.preventDefault()
+  if (!pdfFile.value) {
+    toast.warning('Please select a PDF file')
+    return
+  }
+  try {
+    const arrayBuffer = await pdfFile.value.arrayBuffer()
+    const pdfDoc = await PDFDocument.load(arrayBuffer)
+    // Save the metadata
+    pdfDoc.setTitle(metaDataValues.value.title || '')
+    pdfDoc.setAuthor(metaDataValues.value.author || '')
+    pdfDoc.setSubject(metaDataValues.value.subject || '')
+    pdfDoc.setKeywords(metaDataValues.value.keywords?.split(',') || [])
+
+    // Delete pages if needed
+    const sortedPages = pagesToDelete.value.sort((a, b) => b - a)
+    sortedPages.forEach((page) => {
+      const pageIndex = page - 1
+      if (pageIndex >= 0 && pageIndex < pdfDoc.getPageCount()) {
+        pdfDoc.removePage(pageIndex)
+      }
+    })
+    // Save and open the PDF
+    const pdfBytes = await pdfDoc.save()
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+  } catch (error) {
+    console.error('Error saving PDF:', error)
+    toast.error('Error saving PDF')
+  }
+}
+const handleResetFile = () => {
+  isFileUploaded.value = false
+  pdfFile.value = null
+  pdfSource.value = null
+  totalPages.value = 1
+  pagesToDelete.value = []
+  metaDataValues.value = {
+    title: '',
+    author: '',
+    subject: '',
+    keywords: '',
+    creator: '',
+    producer: '',
+    creationDate: '',
+  }
+}
 </script>
 
 <template>
   <section v-if="!isFileUploaded" class="mx-auto px-4">
     <div class="text-center">
       <h1 class="text-3xl font-bold mb-4">PDF Meta data Editor!</h1>
-      <p class="mb-6">Select a PDF file to edit the meta data</p>
+      <p class="mb-6">Select a PDF file to edit its meta data</p>
       <div
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
@@ -66,17 +162,68 @@ const openFileDialog = () => {
       </div>
     </div>
   </section>
-  <section v-else class="mx-auto px-4">
-    <h2 class="text-2xl font-bold mb-4">PDF Preview</h2>
-    <p class="mb-4">File name: {{ pdfFile?.name }}</p>
-    <div v-if="pdfSource" class="space-y-4">
-      <div
-        v-for="page in totalPages"
-        :key="page"
-        class="border border-gray-300 rounded-lg overflow-hidden mb-4"
-      >
-        <vue-pdf-embed :source="pdfSource" :page="page" />
+  <section v-else class="relative w-full mx-auto px-4 flex justify-center gap-10">
+    <main class="flex-2">
+      <h2 class="text-2xl font-bold mb-4">PDF Preview</h2>
+      <div v-if="pdfSource" class="space-y-4">
+        <div
+          v-for="page in totalPages"
+          :key="page"
+          class="relative mb-4 bg-slate-300/30 rounded-lg"
+        >
+          <div
+            class="border border-gray-300 rounded-lg overflow-hidden"
+            :class="{ 'opacity-50': pagesToDelete.includes(page) }"
+          >
+            <PDFPagePlaceholder v-if="!pagesLoaded.includes(page)" />
+            <vue-pdf-embed
+              :source="pdfSource"
+              :page="page"
+              @loaded="() => pagesLoaded.push(page)"
+            />
+          </div>
+          <div
+            key="delete-page-{{ page }}"
+            class="absolute top-0 -left-[50px] cursor-pointer border border-red-500 p-2 rounded-lg text-red-500 hover:bg-red-500/10"
+            :class="{ 'bg-red-500/10': pagesToDelete.includes(page) }"
+            @click="handleDeletePage(page)"
+          >
+            <DeleteIcon />
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
+    <aside class="sticky top-10 max-w-sm h-fit">
+      <h2 class="text-2xl font-bold mb-4">PDF Meta data</h2>
+      <p>Total pages: {{ totalPages }}</p>
+      <p>Pages to delete: {{ pagesToDelete.length }}</p>
+      <form @submit="handleSubmit" class="mt-5 border border-gray-300 rounded-lg p-4">
+        <label for="title" class="block mb-2"
+          >Title
+          <input type="text" v-model="metaDataValues.title" placeholder="Title" />
+        </label>
+        <label for="author" class="block mb-2"
+          >Author
+          <input type="text" v-model="metaDataValues.author" placeholder="Author" />
+        </label>
+        <label for="subject" class="block mb-2"
+          >Subject
+          <input type="text" v-model="metaDataValues.subject" placeholder="Subject" />
+        </label>
+        <label for="keywords" class="block mb-2"
+          >Keywords
+          <input type="text" v-model="metaDataValues.keywords" placeholder="Keywords" />
+        </label>
+        <button type="submit" class="w-full p-2 mt-2 bg-blue-500 text-white rounded-lg">
+          Download PDF
+        </button>
+        <button
+          @click="handleResetFile"
+          class="w-full p-2 mt-2 bg-slate-400/20 border border-red-500 text-white rounded-lg"
+        >
+          Reset file
+        </button>
+      </form>
+    </aside>
   </section>
 </template>

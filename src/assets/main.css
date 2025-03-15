@@ -93,3 +93,14 @@ body {
   margin: 0 auto;
   font-weight: normal;
 }
+
+form input {
+  font-size: 1rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-background-soft);
+  color: var(--color-text);
+  transition: border-color 0.5s;
+}
