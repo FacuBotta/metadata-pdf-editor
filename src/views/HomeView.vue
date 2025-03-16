@@ -186,18 +186,25 @@ const handleResetFile = () => {
       </div>
     </div>
   </section>
-  <section v-else class="relative w-full mx-auto px-4 flex justify-center gap-10">
+  <section
+    v-else
+    class="relative w-full mx-auto px-4 flex justify-center gap-10 flex-wrap-reverse sm:flex-nowrap"
+  >
     <main class="flex-2">
       <h2 class="text-2xl font-bold mb-4">PDF Preview</h2>
       <div v-if="pdfSource" class="space-y-4">
-        <div
-          v-for="page in totalPages"
-          :key="page"
-          class="relative mb-4 bg-slate-300/30 rounded-lg"
-        >
+        <div v-for="page in totalPages" :key="page" class="relative mb-4 rounded-lg">
+          <div
+            :key="'delete-page-' + page"
+            class="absolute z-50 top-2 right-2 sm:top-0 sm:-left-[50px] w-fit h-fit cursor-pointer border bg-[#181818]/70 border-red-500 p-2 rounded-lg text-red-500 hover:bg-red-500/10"
+            :class="{ 'bg-red-500/30': pagesToDelete.includes(page) }"
+            @click="handleDeletePage(page)"
+          >
+            <DeleteIcon />
+          </div>
           <div
             class="border border-gray-300 rounded-lg overflow-hidden"
-            :class="{ 'opacity-10': pagesToDelete.includes(page) }"
+            :class="{ 'opacity-50 outline outline-red-500': pagesToDelete.includes(page) }"
           >
             <PDFPagePlaceholder v-if="!pagesLoaded.includes(page)" />
             <vue-pdf-embed
@@ -206,18 +213,10 @@ const handleResetFile = () => {
               @loaded="() => pagesLoaded.push(page)"
             />
           </div>
-          <div
-            key="delete-page-{{ page }}"
-            class="absolute top-0 -left-[50px] cursor-pointer border border-red-500 p-2 rounded-lg text-red-500 hover:bg-red-500/10"
-            :class="{ 'bg-red-500/10': pagesToDelete.includes(page) }"
-            @click="handleDeletePage(page)"
-          >
-            <DeleteIcon />
-          </div>
         </div>
       </div>
     </main>
-    <aside class="sticky top-10 max-w-sm h-fit">
+    <aside class="sm:sticky top-10 max-w-sm h-fit">
       <h2 class="text-2xl font-bold mb-4">PDF Metadata</h2>
       <p>Total pages: {{ totalPages }}</p>
       <p>Pages to delete: {{ pagesToDelete.join(', ') }}</p>
