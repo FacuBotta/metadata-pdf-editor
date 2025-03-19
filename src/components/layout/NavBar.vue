@@ -9,7 +9,7 @@ import GitHubIcon from '../icons/GitHubIcon.vue'
   >
     <RouterLink active-class="border-b-2 border-blue-500" to="/">Home</RouterLink>
     <RouterLink active-class="border-b-2 border-blue-500" to="/about">About</RouterLink>
-    <a href="https://github.com/FacuBotta" class="flex gap-1" target="_blank"
+    <a href="https://github.com/FacuBotta/metadata-pdf-editor" class="flex gap-1" target="_blank"
       ><GitHubIcon /> Repo</a
     >
   </nav>

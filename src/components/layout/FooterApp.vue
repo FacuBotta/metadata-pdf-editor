@@ -8,7 +8,7 @@
         >Legal Mentions</RouterLink
       >
       <a
-        href="https://github.com/FacuBotta"
+        href="https://github.com/FacuBotta/metadata-pdf-editor"
         class="px-4 font-thin underline underline-offset-2"
         target="_blank"
         >GitHub Repo</a
